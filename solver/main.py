@@ -6,6 +6,7 @@ import argparse
 import sys
 import numpy as np
 import scipy.ndimage.filters as filters
+import matplotlib.pyplot as plt
 
 def main(argv):
     """The Main function, calls everything else
@@ -21,11 +22,18 @@ def main(argv):
 
     # main simulation loop over timesteps
     for i in xrange(n_timesteps):
+        print "timestep {0: d}".format(i)
 
-        pass
+        dt = parameter_dict["timestep_value"]
 
         # calculate system for the current timestep
+        du_dt = calculate_du_dt(system_array, parameter_dict)
 
+        system_array += dt * du_dt
+
+    plt.imshow(system_array)
+    plt.show()
+        
         # output data
 
     return 0
@@ -44,18 +52,18 @@ def read_input(argv):
 
     parser = argparse.ArgumentParser(description="Integrate the 2d Cahn-Hilliard equation")
 
-    parser.add_argument("--timesteps", type=int, default=1000,
+    parser.add_argument("--timesteps", type=int, default=5000,
                         help="set the number of timesteps to run the simulation for")
-    parser.add_argument("--timestep_value", type=float, default=0.0001,
+    parser.add_argument("--timestep_value", type=float, default=0.005,
                         help="set the duration of each timestep")
-    parser.add_argument("--n_elements", type=int, default=250,
+    parser.add_argument("--n_elements", type=int, default=150,
                         help="set the number of elements N in the NxN domain")
     parser.add_argument("--periodic", help="Use periodic boundaries",
                         dest="boundary", action="store_const", 
                         const="wrap", default="reflect")
-    parser.add_argument("--diffusion_coeff", type=float, default=0.5,
+    parser.add_argument("--diffusion_coeff", type=float, default=2.0,
                         help="set the diffusion coefficient")
-    parser.add_argument("--boundary_coeff", type=float, default=0.5,
+    parser.add_argument("--boundary_coeff", type=float, default=1.5,
                         help="set the boundary coefficient")
     parser.add_argument("--output", type=str, default="default", 
                         choices=["plot", "print", "none"],
@@ -98,7 +106,7 @@ def calculate_du_dt(system, parameter_dict):
     potential_component = system**3 - system
     boundary_component = b_coeff * filters.laplace(system, mode = parameter_dict["boundary"])
 
-    return D_coeff * filters.laplace(potential_component + boundary_component, mode = parameter_dict["boundary"])
+    return D_coeff * filters.laplace(potential_component - boundary_component, mode = parameter_dict["boundary"])
 
 
 if __name__ == "__main__":
